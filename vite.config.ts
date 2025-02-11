@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: "https://nkamlo237.github.io/Cryptography",
+  base: "https://nkamlo237.github.io/Cryptography/",
   build: {
     outDir: "dist",
     rollupOptions: {
