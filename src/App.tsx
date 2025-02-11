@@ -1,7 +1,17 @@
+import Navbar from "./components/footer";
+import Header from "./components/header";
+import Terminal from "./components/Terminal";
+
 function App() {
   return (
-    <div className="h-screen w-full bg-black flex items-center justify-center">
-      <span className="text-white font-bold text-lg">Hello, Welcome</span>
+    <div className="bg-black h-screen flex flex-col w-full items-center">
+      <Header />
+      <div className="w-full h-full text-lg mt-20 flex flex-col items-center justify-center">
+        <Terminal />
+      </div>
+        <div className="fixed bottom-2 lg:bottom-20">
+          <Navbar />
+        </div>
     </div>
   );
 }
