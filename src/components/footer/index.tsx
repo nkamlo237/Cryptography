@@ -13,7 +13,7 @@ const Navbar = () => {
           pathname === "/Cryptography/" ? "border-b-2 border-red-500" : ""
         }`}
       >
-        Fresneil
+        Home
       </Link>
       <Link
         to={"/Cryptography/rsa"}

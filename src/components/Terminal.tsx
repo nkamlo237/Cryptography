@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Terminal = () => {
   const [inputValue, setInputValue] = useState<string>("");
@@ -9,9 +9,9 @@ const Terminal = () => {
     Array<{ command: string; output: string }>
   >([]);
 
-  /*  const [globalOutputHistory, setGlobalOutputHistory] = useState<
-    Array<{ command: string; output: string }>
-  >([]); */
+  const [globalOutputHistory, setGlobalOutputHistory] = useState<string[]>([]);
+
+  const [showHistory, setShowHistory] = useState<boolean>(false);
 
   const [f1, setF1] = useState<string>();
   const [f2, setF2] = useState<string>();
@@ -38,6 +38,10 @@ const Terminal = () => {
     );
   };
 
+  const validateBase64Input = (command: string) => {
+    return /^base64 -[ed] "([^"]*)"$/.test(command);
+  };
+
   const calculXOR = (a: string, b: string) => {
     let result: string = "";
     const arr1 = a.split("");
@@ -52,6 +56,35 @@ const Terminal = () => {
 
     console.log("result", result);
     return result;
+  };
+
+  const encodeOrDecodeBase64 = (command: string) => {
+    const cleanedCommand = command.trim().replace(/\s+/g, " ");
+    const arr = cleanedCommand.split(" ");
+    /*  console.log("option", option);
+    console.log("text", text); */
+    let output = "ok";
+    if (arr[1] === "-e") {
+      console.log(
+        "to encode",
+        cleanedCommand.split("-e ")[1].replace(/["]/g, "")
+      );
+      const encodedText = btoa(
+        cleanedCommand.split("-e ")[1].replace(/["]/g, "")
+      );
+      output = `Encoded text: ${encodedText}`;
+    } else if (arr[1] === "-d") {
+      //remplacer les guillemets
+      //console.log("text", text.replace(/["]/g, ""));
+      console.log("to decode", cleanedCommand.split("-d ")[1]);
+      const decodedText = atob(
+        cleanedCommand.split("-d ")[1].replace(/["]/g, "")
+      );
+      output = `Decoded text: ${decodedText}`;
+    }
+    // setOutputHistory((prevHistory) => [...prevHistory, { command, output }]);
+    console.log("output", output);
+    return output;
   };
 
   const calculR1AndR2 = (f1: string, f2: string, L0: string, R0: string) => {
@@ -90,48 +123,115 @@ const Terminal = () => {
     switch (cleanedCommand) {
       case "help":
         output = `Available commands: 
-        \nhelp: to dispaly available commands, 
-        \nclear: to clear the output,
-        \nfresneil: to display informations about fresneil program `;
+        \nhelp: to dispaly available commands,
+        \nclear: to clear the output
+        \nhistory: to display commands history
+        \nfresneil: to display informations about fresneil program 
+        \nbase64: to display informations about base64 program`;
         setIsFresneil(false);
         setIsFresneilWithOptions(false);
+        setShowHistory(false);
         setOutputHistory([{ command, output }]);
+        break;
+      case "history":
+        setIsFresneil(false);
+        setIsFresneilWithOptions(false);
+        setOutputHistory([]);
+        setShowHistory(true);
         break;
       case "fresneil":
         setOutputHistory([]);
         setIsFresneil(true);
         setIsFresneilWithOptions(false);
+        setShowHistory(false);
+        setOutputHistory([{ command, output }]);
+        break;
+      case "base64":
+        setOutputHistory([]);
+        setIsFresneil(false);
+        setIsFresneilWithOptions(false);
+        setShowHistory(false);
+        output = `Ce programme prend une chaine de caractères en entrée et retourne une version encodée ou décodée en base64
+          \nExemple: 
+          \nEncoder une chaine: base64 -e "hello world"
+          \nDécoder une chaine encodée: base64 -d "aGVsbG8gd29ybGQ="
+          \nNB: Rassurer vous de mettre la chaine à encoder ou à décoder entre double quotes`;
         setOutputHistory([{ command, output }]);
         break;
       case "clear":
         setOutputHistory([]);
         setIsFresneil(false);
         setIsFresneilWithOptions(false);
+        setShowHistory(false);
         return;
       default:
         setIsFresneil(false);
-        if (command.trim().startsWith("fresneil")) {
+        if (cleanedCommand.startsWith("fresneil")) {
           console.log("command", cleanedCommand);
           console.log("state", validateInput(cleanedCommand));
           if (!validateInput(cleanedCommand)) {
             setIsFresneilWithOptions(false);
+            setShowHistory(false);
             output = "Error: Command incorrect";
             setOutputHistory([{ command, output }]);
           } else {
             setOutputHistory([]);
+            setShowHistory(false);
             setIsFresneilWithOptions(true);
             const arr = cleanedCommand.split(" ");
             console.log("arr", arr);
             calculR1AndR2(arr[2], arr[4], arr[6], arr[8]);
           }
+        } else if (cleanedCommand.startsWith("base64")) {
+          console.log("command", cleanedCommand);
+          if (!validateBase64Input(cleanedCommand)) {
+            output = "Error: Command incorrect";
+            setIsFresneilWithOptions(false);
+            setShowHistory(false);
+            setOutputHistory([{ command, output }]);
+          } else {
+            console.log("state", validateBase64Input(cleanedCommand));
+            setOutputHistory([]);
+            setIsFresneilWithOptions(false);
+            setShowHistory(false);
+            const output = encodeOrDecodeBase64(cleanedCommand);
+            setOutputHistory([{ command, output }]);
+            //console.log("arr", arr);
+          }
         } else {
           setIsFresneilWithOptions(false);
+          setShowHistory(false);
           output = `Error: Command not found: ${command}`;
           setOutputHistory([{ command, output }]);
         }
     }
-    //setGlobalOutputHistory((prev) => [...prev, { command, output }]);
+    console.log("output", command, output);
+    setGlobalOutputHistory((prev) => [...prev, command]);
   };
+
+  useEffect(() => {
+    // État pour suivre la position dans l'historique
+    let currentIndex = globalOutputHistory.length;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (globalOutputHistory.length === 0) return;
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        currentIndex = Math.max(currentIndex - 1, 0);
+        setInputValue(globalOutputHistory[currentIndex]);
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        currentIndex = Math.min(currentIndex + 1, globalOutputHistory.length);
+        setInputValue(globalOutputHistory[currentIndex] || "");
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [globalOutputHistory]);
 
   return (
     <div className="mx-2 relative lg:w-[70rem] h-[32rem] border-4 border-gray-900 bg-gray-800 flex flex-col">
@@ -228,6 +328,16 @@ const Terminal = () => {
               </div>
             ))}
           </>
+        )}
+
+        {showHistory && (
+          <div className="flex flex-col gap-y-2">
+            {globalOutputHistory.map((entry, index) => (
+              <div key={index}>
+                <span className="text-white">#&gt;~ {entry}</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
       <span className="text-blue-500">Enter "help" for more informations</span>
