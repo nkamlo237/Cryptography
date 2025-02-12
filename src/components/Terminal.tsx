@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const Terminal = () => {
   const [inputValue, setInputValue] = useState<string>("");
@@ -132,16 +132,6 @@ const Terminal = () => {
     }
     //setGlobalOutputHistory((prev) => [...prev, { command, output }]);
   };
-
-  useEffect(() => {
-    if (inputValue === "") {
-      const output = `Available commands: 
-      \nhelp: to dispaly available commands, 
-      \nclear: to clear the output,
-      \nfresneil: to display informations about fresneil program `;
-      setOutputHistory([{ command: "help", output }]);
-    }
-  }, [inputValue]);
 
   return (
     <div className="mx-2 relative lg:w-[70rem] h-[32rem] border-4 border-gray-900 bg-gray-800 flex flex-col">
